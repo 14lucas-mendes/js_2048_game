@@ -6,125 +6,13 @@
  * Feel free to add more props and methods if needed.
  */
 class Game {
-  /**
-   * Creates a new game instance.
-   *
-   * @param {number[][]} initialState
-   * The initial state of the board.
-   * @default
-   * [[0, 0, 0, 0],
-   *  [0, 0, 0, 0],
-   *  [0, 0, 0, 0],
-   *  [0, 0, 0, 0]]
-   *
-   * If passed, the board will be initialized with the provided
-   * initial state.
-   */
-  constructor(
-    initialState = [
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-    ],
-  ) {
-    this.state = 'idle';
-    this.score = 0;
-    this.initialState = initialState;
-  }
+  // Tabuleiro Inicial
+  constructor(boardId, scoreId, buttonId) {
+    this.boardElement = document.getElementById(boardId);
+    this.scoreElement = document.getElementById(scoreId);
+    this.startButton = document.getElementById(buttonId);
 
-  // eslint-disable-next-line no-console
-
-  moveLeft() {
-    if (this.state === 'idle') {
-      return;
-    }
-
-    const updatedState = this.processMoveLeft();
-
-    this.updatedGameState(updatedState);
-
-    return this.initialState;
-  }
-  moveRight() {
-    if (this.state === 'idle') {
-      return;
-    }
-
-    const updatedState = this.processMoveRight();
-
-    this.updatedGameState(updatedState);
-
-    return this.initialState;
-  }
-  moveUp() {
-    if (this.state === 'idle') {
-      return;
-    }
-
-    const updatedState = this.processMoveUp();
-
-    this.updatedGameState(updatedState);
-
-    return this.initialState;
-  }
-  moveDown() {
-    if (this.state === 'idle') {
-      return;
-    }
-
-    const updatedState = this.processMoveDown();
-
-    this.updatedGameState(updatedState);
-
-    return this.initialState;
-  }
-  /**
-   * @returns {number}
-   */
-  getScore() {
-    return this.score;
-  }
-
-  /**
-   * @returns {number[][]}
-   */
-  getState() {
-    return this.initialState;
-  }
-
-  /**
-   * Returns the current game status.
-   *
-   * @returns {string} One of: 'idle', 'playing', 'win', 'lose'
-   *
-   * `idle` - the game has not started yet (the initial state);
-   * `playing` - the game is in progress;
-   * `win` - the game is won;
-   * `lose` - the game is lost
-   */
-  getStatus() {
-    return this.state;
-  }
-
-  /**
-   * Starts the game.
-   */
-  start() {
-    const initialStateEmpty = this.isInitialStateAllZeros;
-
-    const newInitialState = this.generateInitialState(initialStateEmpty);
-
-    this.resetGamesState(newInitialState);
-
-    return this.initialState;
-  }
-
-  /**
-   * Resets the game.
-   */
-  restart() {
-    this.initialState = [
+    this.board = [
       [0, 0, 0, 0],
       [0, 0, 0, 0],
       [0, 0, 0, 0],
@@ -132,101 +20,314 @@ class Game {
     ];
 
     this.score = 0;
-    this.state = 'idle';
+    this.status = 'idle';
 
-    return this.initialState;
+    this.setupInput();
+    this.setupButton();
   }
 
-  // add metodo de inicialização do jogo
-  isInitialStateAllZeros() {
-    return this.initialState.flat().every((value) => value === 0);
-  }
+  // Metodo para encontrar celulas vazias
+  findEmptyCells() {
+    const empytCells = [];
 
-  generateInitialState(isEmpty) {
-    const numberOfCellsToAdd = isEmpty ? 2 : 1;
-
-    return this.addNewCellRandomCell(this.initialState, numberOfCellsToAdd);
-  }
-
-  resetGamesState(newState) {
-    this.initialState = newState;
-    this.score = 0;
-    this.state = 'playing';
-  }
-
-  // add metodo de atualização do tabuleiro quando se move para a esquerda
-  processMoveLeft() {
-    const moveRows = this.initialState.map(this.mergeToTheLeft);
-    const withNewCell = this.addNewCellRandomCell(moveRows, 1);
-
-    return withNewCell;
-  }
-
-  // atualiza os movimentos independente da direção
-  updatedGameState(newState) {
-    this.state = this.loseWinState(newState);
-    this.score += this.calculateScore(this.initialState, newState);
-    this.initialState = newState;
-  }
-
-  // add metodo de atualização do tabuleiro quando se move para a direta
-  processMoveRight() {
-    const moveRows = this.initialState(this.mergeToTheRight);
-    const withNewCell = this.addNewCellRandomCell(moveRows, 1);
-
-    return withNewCell;
-  }
-
-  // add metodo de atualização do tabuleiro quando se move para cima
-  processMoveUp() {
-    const moveRows = this.initialState(this.mergeToTheUp);
-    const withNewCell = this.addNewCellRandomCell(moveRows, 1);
-
-    return withNewCell;
-  }
-
-  // add metodo de atualização do tabuleiro quando se move para baixo
-  processMoveDown() {
-    const moveRows = this.initialState(this.mergeToTheDown);
-    const withNewCell = this.addNewCellRandomCell(moveRows, 1);
-
-    return withNewCell;
-  }
-
-  // add novas celulas ao tabuleiro
-  addNewCellRandomCell(initialState, qtdCellAdd) {
-    const matrixInRow = initialState.flat();
-
-    const indexEvaluation = matrixInRow.forEach((value, index) => {
-      if (value === 0 && qtdCellAdd > 0) {
-        matrixInRow[index] = 1;
-      } else {
-        matrixInRow[index] = null;
+    for (let i = 0; i < this.board.length; i++) {
+      for (let j = 0; j < this.board[i].length; j++) {
+        if (this.board[i][j] === 0) {
+          empytCells.push([i, j]);
+        }
       }
-    });
+    }
 
-    if (indexEvaluation.length === 0) {
-      return initialState;
+    return empytCells;
+  }
+
+  // Metodo para adcionar valores no inicio do jogo
+  addRandomTile() {
+    const empytCells = this.findEmptyCells();
+
+    if (empytCells.length > 0) {
+      const randomIndex = Math.floor(Math.random() * empytCells.length);
+      const [row, col] = empytCells[randomIndex];
+
+      const newValue = Math.random() < 0.1 ? 4 : 2;
+
+      this.board[row][col] = newValue;
+    }
+
+    return empytCells;
+  }
+
+  // Metodo para renderizar o jogo
+  render() {
+    for (let i = 0; i < this.board.length; i++) {
+      for (let j = 0; j < this.board[i].length; j++) {
+        // Acessa a celula corrspondente no html
+        const cell = this.boardElement.rows[i].cells[j];
+        const value = this.board[i][j];
+
+        // Limpa o conteudo e estilo da celula
+        cell.textContent = '';
+        cell.className = 'field-cell';
+
+        // Se o valor não for 0, preencha a celula.
+        if (value !== 0) {
+          cell.textContent = value;
+
+          cell.classList.add('field-cell--%cell_' + value);
+        }
+      }
     }
   }
 
-  // verifica se perdeu ou ganhou
-  loseWinState() {}
+  // Metodo para iniciar o jogo
+  startGame() {
+    // Prepara os dados
+    this.board = [
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+    ];
+    this.score = 0;
+    this.status = 'playing';
 
-  // verifca a pontuação
-  calculateScore() {}
+    this.startButton.textContent = 'Restart';
 
-  // mescla para a esquerda
-  mergeToTheLeft() {}
+    // Add as 2 peças inicias do jogo
+    this.addRandomTile();
+    this.addRandomTile();
 
-  // mescla para a direita
-  mergeToTheRight() {}
+    // Desenha na tela
+    this.render();
+    this.updateScore();
+  }
 
-  // mescla para cima
-  mergeToTheUp() {}
+  setupInput() {
+    document.addEventListener('keydown', (e) => {
+      switch (e.key) {
+        case 'ArrowUp':
+          this.moveUp();
+          break;
+        case 'ArrowDown':
+          this.moveDown();
+          break;
+        case 'ArrowLeft':
+          this.moveLeft();
+          break;
+        case 'ArrowRight':
+          this.moveRight();
+          break;
+      }
+    });
+  }
 
-  // mescla para baixo
-  mergeToTheDown() {}
+  // Metodo para movimentar para a esquerda
+  moveLeft() {
+    let boardChanged = false;
+
+    for (let i = 0; i < 4; i++) {
+      const originalRow = [...this.board[i]];
+      const newRow = this.processRow(originalRow);
+
+      this.board[i] = newRow;
+
+      if (JSON.stringify(originalRow) !== JSON.stringify(this.board[i])) {
+        boardChanged = true;
+      }
+    }
+
+    if (boardChanged) {
+      this.addRandomTile();
+      this.render();
+
+      if (this.checkGameWin()) {
+        setInterval(() => {
+          alert('Congratulations! You reached 2048!');
+        }, 200);
+      }
+    } else {
+      this.checkForGameOver();
+    }
+  }
+
+  // Metodo para movimentar para a direita
+  moveRight() {
+    let boardChanged = false;
+
+    for (let i = 0; i < 4; i++) {
+      const originalRow = [...this.board[i]];
+      const reversedRow = [...originalRow].reverse();
+      const processedRow = this.processRow(reversedRow);
+      const newRow = processedRow.reverse();
+
+      this.board[i] = newRow;
+
+      if (JSON.stringify(originalRow) !== JSON.stringify(this.board[i])) {
+        boardChanged = true;
+      }
+    }
+
+    if (boardChanged) {
+      this.addRandomTile();
+      this.render();
+
+      if (this.checkGameWin()) {
+        setInterval(() => {
+          alert('Congratulations! You reached 2048!');
+        }, 200);
+      }
+    } else {
+      this.checkForGameOver();
+    }
+  }
+
+  // Metodo para movimentar para cima
+  moveUp() {
+    const originalBoard = JSON.stringify(this.board);
+
+    this.transpose();
+    this.moveLeft();
+    this.transpose();
+
+    if (originalBoard !== JSON.stringify(this.board)) {
+      this.addRandomTile();
+      this.render();
+
+      if (this.checkGameWin()) {
+        setInterval(() => {
+          alert('Congratulations! You reached 2048!');
+        }, 200);
+      }
+    } else {
+      this.checkForGameOver();
+    }
+  }
+
+  // Metodo para movimentar para baixo
+  moveDown() {
+    const originalBoard = JSON.stringify(this.board);
+
+    this.transpose();
+    this.moveRight();
+    this.transpose();
+
+    if (originalBoard !== JSON.stringify(this.board)) {
+      this.addRandomTile();
+      this.render();
+
+      if (this.checkGameWin()) {
+        setInterval(() => {
+          alert('Congratulations! You reached 2048!');
+        }, 200);
+      }
+    } else {
+      this.checkForGameOver();
+    }
+  }
+
+  // Metodo para processar a logica de movimento
+  processRow(row) {
+    // Gera o slide da linha
+    let newRow = row.filter((cell) => cell !== 0);
+
+    for (let j = 0; j < newRow.length - 1; j++) {
+      if (newRow[j] === newRow[j + 1]) {
+        newRow[j] *= 2;
+        this.score += newRow[j];
+        this.updateScore();
+        newRow[j + 1] = 0;
+      }
+    }
+
+    newRow = newRow.filter((r) => r !== 0);
+
+    while (newRow.length < 4) {
+      newRow.push(0);
+    }
+
+    return newRow;
+  }
+
+  // Metodo para transpor a matriz
+  transpose() {
+    const newBoard = [
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+    ];
+
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 4; j++) {
+        newBoard[i][j] = this.board[j][i];
+      }
+    }
+
+    this.board = newBoard;
+  }
+
+  updateScore() {
+    this.scoreElement.textContent = this.score;
+  }
+
+  checkForGameOver() {
+    // Se houver espaças vazios o jogo ainda não acabaou
+    if (this.findEmptyCells().length > 0) {
+      return false;
+    }
+
+    // Procura por possivéis fusões
+    for (let i = 0; i < this.board.length; i++) {
+      for (let j = 0; j < this.board.length; j++) {
+        const currentCell = this.board[i][j];
+
+        // Checa o vizinho da direita
+        if (j < 3 && currentCell[i][j + 1]) {
+          return false;
+        }
+
+        // Checa o vizinho de baixo
+        if (i < 3 && this.board[i + 1][j]) {
+          return false;
+        }
+      }
+    }
+
+    // Se o tabuleiro está cheio e não há mais fusões, game over!
+    return true;
+  }
+
+  // Metodo para checar se o usuario venceu
+  checkGameWin() {
+    for (let i = 0; i < this.board.length; i++) {
+      for (let j = 0; j < this.board.length; j++) {
+        if (this.board[i][j] === 2048) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // Metodo para resetar o jogo
+  restart() {
+    this.board = [
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+    ];
+    this.score = 0;
+    this.status = 'idle';
+  }
+
+  // Metodo para setar o botão de start
+  setupButton() {
+    this.startButton.addEventListener('click', () => {
+      this.startGame();
+    });
+  }
 }
 
 module.exports = Game;
