@@ -7,310 +7,45 @@
  */
 class Game {
   // Tabuleiro Inicial
-  constructor(boardId, scoreId, buttonId) {
-    this.boardElement = document.getElementById(boardId);
-    this.scoreElement = document.getElementById(scoreId);
-    this.startButton = document.getElementById(buttonId);
+  constructor(tableId, scoreId, startId) {
+    this.tableId = tableId;
+    this.scoreId = scoreId;
+    this.startId = startId;
 
-    this.board = [
+    this.initialState = [
       [0, 0, 0, 0],
       [0, 0, 0, 0],
       [0, 0, 0, 0],
       [0, 0, 0, 0],
     ];
 
+    this.board = this.initialState;
     this.score = 0;
+    this.hasWon = false;
     this.status = 'idle';
-
-    this.setupInput();
-    this.setupButton();
-  }
-
-  // Metodo para encontrar celulas vazias
-  findEmptyCells() {
-    const empytCells = [];
-
-    for (let i = 0; i < this.board.length; i++) {
-      for (let j = 0; j < this.board[i].length; j++) {
-        if (this.board[i][j] === 0) {
-          empytCells.push([i, j]);
-        }
-      }
-    }
-
-    return empytCells;
-  }
-
-  // Metodo para adcionar valores no inicio do jogo
-  addRandomTile() {
-    const empytCells = this.findEmptyCells();
-
-    if (empytCells.length > 0) {
-      const randomIndex = Math.floor(Math.random() * empytCells.length);
-      const [row, col] = empytCells[randomIndex];
-
-      const newValue = Math.random() < 0.1 ? 4 : 2;
-
-      this.board[row][col] = newValue;
-    }
-
-    return empytCells;
-  }
-
-  // Metodo para renderizar o jogo
-  render() {
-    for (let i = 0; i < this.board.length; i++) {
-      for (let j = 0; j < this.board[i].length; j++) {
-        // Acessa a celula corrspondente no html
-        const cell = this.boardElement.rows[i].cells[j];
-        const value = this.board[i][j];
-
-        // Limpa o conteudo e estilo da celula
-        cell.textContent = '';
-        cell.className = 'field-cell';
-
-        // Se o valor não for 0, preencha a celula.
-        if (value !== 0) {
-          cell.textContent = value;
-
-          cell.classList.add('field-cell--%cell_' + value);
-        }
-      }
-    }
+    this.gameOver = false;
   }
 
   // Metodo para iniciar o jogo
-  startGame() {
-    // Prepara os dados
-    this.board = [
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-    ];
-    this.score = 0;
+  start() {
     this.status = 'playing';
-
-    this.startButton.textContent = 'Restart';
-
-    // Add as 2 peças inicias do jogo
+    // Adiciona dois números iniciais ao tabuleiro
     this.addRandomTile();
     this.addRandomTile();
-
-    // Desenha na tela
-    this.render();
-    this.updateScore();
+    // Esconde a mensagem inicial
+    document.querySelector('.message-start').classList.add('hidden');
+    // Atualiza o display
+    this.updateDisplay();
   }
 
-  setupInput() {
-    document.addEventListener('keydown', (e) => {
-      switch (e.key) {
-        case 'ArrowUp':
-          this.moveUp();
-          break;
-        case 'ArrowDown':
-          this.moveDown();
-          break;
-        case 'ArrowLeft':
-          this.moveLeft();
-          break;
-        case 'ArrowRight':
-          this.moveRight();
-          break;
-      }
-    });
+  init() {
+    // Configura os eventos
+    this.bindEvents();
+    // Atualiza o display inicial
+    this.updateDisplay();
   }
 
-  // Metodo para movimentar para a esquerda
-  moveLeft() {
-    let boardChanged = false;
-
-    for (let i = 0; i < 4; i++) {
-      const originalRow = [...this.board[i]];
-      const newRow = this.processRow(originalRow);
-
-      this.board[i] = newRow;
-
-      if (JSON.stringify(originalRow) !== JSON.stringify(this.board[i])) {
-        boardChanged = true;
-      }
-    }
-
-    if (boardChanged) {
-      this.addRandomTile();
-      this.render();
-
-      if (this.checkGameWin()) {
-        setInterval(() => {
-          alert('Congratulations! You reached 2048!');
-        }, 200);
-      }
-    } else {
-      this.checkForGameOver();
-    }
-  }
-
-  // Metodo para movimentar para a direita
-  moveRight() {
-    let boardChanged = false;
-
-    for (let i = 0; i < 4; i++) {
-      const originalRow = [...this.board[i]];
-      const reversedRow = [...originalRow].reverse();
-      const processedRow = this.processRow(reversedRow);
-      const newRow = processedRow.reverse();
-
-      this.board[i] = newRow;
-
-      if (JSON.stringify(originalRow) !== JSON.stringify(this.board[i])) {
-        boardChanged = true;
-      }
-    }
-
-    if (boardChanged) {
-      this.addRandomTile();
-      this.render();
-
-      if (this.checkGameWin()) {
-        setInterval(() => {
-          alert('Congratulations! You reached 2048!');
-        }, 200);
-      }
-    } else {
-      this.checkForGameOver();
-    }
-  }
-
-  // Metodo para movimentar para cima
-  moveUp() {
-    const originalBoard = JSON.stringify(this.board);
-
-    this.transpose();
-    this.moveLeft();
-    this.transpose();
-
-    if (originalBoard !== JSON.stringify(this.board)) {
-      this.addRandomTile();
-      this.render();
-
-      if (this.checkGameWin()) {
-        setInterval(() => {
-          alert('Congratulations! You reached 2048!');
-        }, 200);
-      }
-    } else {
-      this.checkForGameOver();
-    }
-  }
-
-  // Metodo para movimentar para baixo
-  moveDown() {
-    const originalBoard = JSON.stringify(this.board);
-
-    this.transpose();
-    this.moveRight();
-    this.transpose();
-
-    if (originalBoard !== JSON.stringify(this.board)) {
-      this.addRandomTile();
-      this.render();
-
-      if (this.checkGameWin()) {
-        setInterval(() => {
-          alert('Congratulations! You reached 2048!');
-        }, 200);
-      }
-    } else {
-      this.checkForGameOver();
-    }
-  }
-
-  // Metodo para processar a logica de movimento
-  processRow(row) {
-    // Gera o slide da linha
-    let newRow = row.filter((cell) => cell !== 0);
-
-    for (let j = 0; j < newRow.length - 1; j++) {
-      if (newRow[j] === newRow[j + 1]) {
-        newRow[j] *= 2;
-        this.score += newRow[j];
-        this.updateScore();
-        newRow[j + 1] = 0;
-      }
-    }
-
-    newRow = newRow.filter((r) => r !== 0);
-
-    while (newRow.length < 4) {
-      newRow.push(0);
-    }
-
-    return newRow;
-  }
-
-  // Metodo para transpor a matriz
-  transpose() {
-    const newBoard = [
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-    ];
-
-    for (let i = 0; i < 4; i++) {
-      for (let j = 0; j < 4; j++) {
-        newBoard[i][j] = this.board[j][i];
-      }
-    }
-
-    this.board = newBoard;
-  }
-
-  updateScore() {
-    this.scoreElement.textContent = this.score;
-  }
-
-  checkForGameOver() {
-    // Se houver espaças vazios o jogo ainda não acabaou
-    if (this.findEmptyCells().length > 0) {
-      return false;
-    }
-
-    // Procura por possivéis fusões
-    for (let i = 0; i < this.board.length; i++) {
-      for (let j = 0; j < this.board.length; j++) {
-        const currentCell = this.board[i][j];
-
-        // Checa o vizinho da direita
-        if (j < 3 && currentCell[i][j + 1]) {
-          return false;
-        }
-
-        // Checa o vizinho de baixo
-        if (i < 3 && this.board[i + 1][j]) {
-          return false;
-        }
-      }
-    }
-
-    // Se o tabuleiro está cheio e não há mais fusões, game over!
-    return true;
-  }
-
-  // Metodo para checar se o usuario venceu
-  checkGameWin() {
-    for (let i = 0; i < this.board.length; i++) {
-      for (let j = 0; j < this.board.length; j++) {
-        if (this.board[i][j] === 2048) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  // Metodo para resetar o jogo
+  // Metodo para reiniciar o jogo
   restart() {
     this.board = [
       [0, 0, 0, 0],
@@ -320,13 +55,366 @@ class Game {
     ];
     this.score = 0;
     this.status = 'idle';
+    this.gameOver = false;
+    this.hasWon = false;
+
+    // Esconde todas as mensagens
+    document.querySelectorAll('.message').forEach((msg) => {
+      msg.classList.add('hidden');
+    });
+
+    this.updateScore();
+    this.updateDisplay();
   }
 
-  // Metodo para setar o botão de start
-  setupButton() {
-    this.startButton.addEventListener('click', () => {
-      this.startGame();
+  // Metodo para adicionar um valor de (2 ou 4) em uma posição aleatória
+  addRandomTile() {
+    const emptyCells = [];
+
+    // Encontrar todas as células vazias
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 4; col++) {
+        if (this.board[row][col] === 0) {
+          emptyCells.push({ row, col });
+        }
+      }
+    }
+
+    // Adiciona o valor de (2 ou 4) em uma célula vazia aleatória
+    if (emptyCells.length > 0) {
+      const randomCell =
+        emptyCells[Math.floor(Math.random() * emptyCells.length)];
+
+      const newValue = Math.random() < 0.9 ? 2 : 4;
+
+      this.board[randomCell.row][randomCell.col] = newValue;
+    }
+  }
+
+  // Metodo para movimentar o tabuleiro
+  move(direction) {
+    if (this.gameOver || this.status !== 'playing') {
+      return;
+    }
+
+    let moved = false;
+
+    switch (direction) {
+      case 'left':
+        moved = this.moveLeft();
+        break;
+      case 'right':
+        moved = this.moveRight();
+        break;
+      case 'up':
+        moved = this.moveUp();
+        break;
+      case 'down':
+        moved = this.moveDown();
+        break;
+      default:
+        return;
+    }
+
+    // Só adiciona nova peça se houve movimento
+    if (moved) {
+      this.addRandomTile();
+      this.updateDisplay();
+      this.updateScore();
+      this.checkGameState();
+    }
+  }
+
+  // Metodo para movimentar para a esquerda
+  moveLeft() {
+    let moved = false;
+    const newBoard = this.board.map((row) => {
+      const newRow = row.filter((num) => num !== 0);
+
+      for (let i = 0; i < newRow.length - 1; i++) {
+        if (newRow[i] === newRow[i + 1]) {
+          newRow[i] *= 2;
+          this.score += newRow[i]; // Adiciona ao score
+          newRow[i + 1] = 0;
+          moved = true;
+        }
+      }
+
+      const merged = newRow.filter((num) => num !== 0);
+
+      while (merged.length < 4) {
+        merged.push(0);
+      }
+
+      return merged;
     });
+
+    this.board = newBoard;
+
+    return moved;
+  }
+
+  // Metodo para movimentar para a direita
+  moveRight() {
+    let moved = false;
+    const newBoard = this.board.map((row) => {
+      const newRow = row.filter((num) => num !== 0);
+
+      for (let i = newRow.length - 1; i > 0; i--) {
+        if (newRow[i] === newRow[i - 1]) {
+          newRow[i] *= 2;
+          this.score += newRow[i]; // Adiciona ao score
+          newRow[i - 1] = 0;
+          moved = true;
+        }
+      }
+
+      const merged = newRow.filter((num) => num !== 0);
+
+      while (merged.length < 4) {
+        merged.unshift(0);
+      }
+
+      return merged;
+    });
+
+    this.board = newBoard;
+
+    return moved;
+  }
+
+  // Metodo para movimentar para cima
+  moveUp() {
+    let moved = false;
+    const newBoard = [[], [], [], []];
+
+    for (let col = 0; col < 4; col++) {
+      const newCol = [];
+      const originalCol = [...newCol];
+
+      for (let row = 0; row < 4; row++) {
+        if (this.board[row][col] !== 0) {
+          newCol.push(this.board[row][col]);
+        }
+      }
+
+      for (let i = 0; i < newCol.length - 1; i++) {
+        if (newCol[i] === newCol[i + 1]) {
+          newCol[i] *= 2;
+          this.score += newCol[i];
+          newCol[i + 1] = 0;
+        }
+
+        if (JSON.stringify(originalCol) !== JSON.stringify(newCol)) {
+          moved = true;
+        }
+      }
+
+      // Remove os zeros novamente após a fusão e adiciona zeros ao final
+      const merged = newCol.filter((num) => num !== 0);
+
+      while (merged.length < 4) {
+        merged.push(0);
+      }
+
+      // Preenche a nova coluna no novo tabuleiro
+      for (let row = 0; row < 4; row++) {
+        newBoard[row][col] = merged[row];
+      }
+    }
+
+    this.board = newBoard;
+
+    return moved;
+  }
+  // Metodo para movimentar para baixo
+  moveDown() {
+    let moved = false;
+    const newBoard = [[], [], [], []];
+
+    for (let col = 0; col < 4; col++) {
+      const newCol = [];
+      const originalCol = [...newCol];
+
+      for (let row = 0; row < 4; row++) {
+        if (this.board[row][col] !== 0) {
+          newCol.push(this.board[row][col]);
+        }
+      }
+
+      for (let i = newCol.length - 1; i > 0; i--) {
+        if (newCol[i] === newCol[i - 1]) {
+          newCol[i] *= 2;
+          this.score += newCol[i];
+          newCol[i - 1] = 0;
+        }
+
+        if (JSON.stringify(originalCol) !== JSON.stringify(newCol)) {
+          moved = true;
+        }
+      }
+
+      // Remove os zeros novamente após a fusão e adiciona zeros ao início
+      const merged = newCol.filter((num) => num !== 0);
+
+      while (merged.length < 4) {
+        merged.unshift(0);
+      }
+
+      // Preenche a nova coluna no novo tabuleiro
+      for (let row = 0; row < 4; row++) {
+        newBoard[row][col] = merged[row];
+      }
+    }
+
+    this.board = newBoard;
+
+    return moved;
+  }
+
+  updateScore() {
+    const scoreElement = document.getElementById(this.scoreId);
+
+    if (scoreElement) {
+      scoreElement.textContent = this.score;
+    }
+  }
+
+  updateDisplay() {
+    const table = document.getElementById(this.tableId);
+
+    if (!table) {
+      return;
+    }
+
+    const cells = table.getElementsByClassName('field-cell');
+    let cellIndex = 0;
+
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 4; col++) {
+        const value = this.board[row][col];
+        const cell = cells[cellIndex];
+
+        // Remove classes antigas
+        cell.className = 'field-cell';
+
+        // Adiciona o valor como texto
+        cell.textContent = value || '';
+
+        // Adiciona a classe específica do valor
+        if (value) {
+          cell.classList.add(`field-cell--${value}`);
+        }
+
+        cellIndex++;
+      }
+    }
+  }
+
+  bindEvents() {
+    // Evento do botão start
+    const startButton = document.getElementById(this.startId);
+
+    if (startButton) {
+      startButton.addEventListener('click', () => {
+        this.start();
+      });
+    }
+
+    // Eventos do teclado
+    document.addEventListener('keydown', (e) => {
+      if (this.status !== 'playing') {
+        return;
+      }
+
+      switch (e.key) {
+        case 'ArrowLeft':
+          if (this.moveLeft()) {
+            this.addRandomTile();
+          }
+          break;
+        case 'ArrowRight':
+          if (this.moveRight()) {
+            this.addRandomTile();
+          }
+          break;
+        case 'ArrowUp':
+          if (this.moveUp()) {
+            this.addRandomTile();
+          }
+          break;
+        case 'ArrowDown':
+          if (this.moveDown()) {
+            this.addRandomTile();
+          }
+          break;
+      }
+
+      this.updateScore();
+      this.updateDisplay();
+      this.checkGameState();
+    });
+  }
+
+  checkGameState() {
+    // Verifica se perdeu
+    if (!this.canMove()) {
+      this.gameOver = true;
+
+      const message = document.querySelector('.message-lose');
+
+      if (message) {
+        message.classList.remove('hidden');
+      }
+    }
+
+    // Verifica se ganhou (atingiu 2048)
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 4; col++) {
+        if (this.board[row][col] === 2048) {
+          this.hasWon = true;
+
+          const message = document.querySelector('.message-win');
+
+          if (message) {
+            message.classList.remove('hidden');
+          }
+
+          return;
+        }
+      }
+    }
+  }
+
+  canMove() {
+    // Verifica se há células vazias
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 4; col++) {
+        if (this.board[row][col] === 0) {
+          return true;
+        }
+
+        const current = this.board[row][col];
+
+        // Verifica a célula à direita
+        if (col < 3 && this.board[row][col + 1] === current) {
+          return true;
+        }
+
+        // Verifica a célula abaixo
+        if (row < 3 && this.board[row + 1][col] === current) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  hideMessage() {
+    const message = document.getElementById('message');
+
+    message.style.display = 'none';
   }
 }
 

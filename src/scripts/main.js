@@ -1,11 +1,12 @@
 'use strict';
 
 // Uncomment the next lines to use your game instance in the browser
+'use strict';
+
 import Game from '../modules/Game.class.js';
 
-const game = new Game('game-header', 'game-score', 'start');
+// Inicializa o jogo com os IDs corretos do HTML
+const game = new Game('table', 'score', 'start');
 
-// Write your code here
-game.startButton.addEventListener('click', () => {
-  game.startGame();
-});
+// Inicializa o jogo configurando os eventos e display
+game.init();
