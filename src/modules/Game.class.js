@@ -47,12 +47,15 @@ class Game {
 
   // Metodo para reiniciar o jogo
   restart() {
+    // Reseta o tabuleiro
     this.board = [
       [0, 0, 0, 0],
       [0, 0, 0, 0],
       [0, 0, 0, 0],
       [0, 0, 0, 0],
     ];
+
+    // Reseta estados
     this.score = 0;
     this.status = 'idle';
     this.gameOver = false;
@@ -63,6 +66,17 @@ class Game {
       msg.classList.add('hidden');
     });
 
+    // Mostra mensagem inicial
+    document.querySelector('.message-start').classList.remove('hidden');
+
+    // Reseta texto do botão
+    const startButton = document.getElementById(this.startId);
+
+    if (startButton) {
+      startButton.textContent = 'Start';
+    }
+
+    // Atualiza display
     this.updateScore();
     this.updateDisplay();
   }
@@ -190,7 +204,7 @@ class Game {
 
     for (let col = 0; col < 4; col++) {
       const newCol = [];
-      const originalCol = [...newCol];
+      const originalCol = this.board.map((row) => row[col]);
 
       for (let row = 0; row < 4; row++) {
         if (this.board[row][col] !== 0) {
@@ -234,7 +248,7 @@ class Game {
 
     for (let col = 0; col < 4; col++) {
       const newCol = [];
-      const originalCol = [...newCol];
+      const originalCol = this.board.map((row) => row[col]);
 
       for (let row = 0; row < 4; row++) {
         if (this.board[row][col] !== 0) {
@@ -317,7 +331,16 @@ class Game {
 
     if (startButton) {
       startButton.addEventListener('click', () => {
-        this.start();
+        if (this.status === 'idle') {
+          // Primeiro clique - Inicia o jogo
+          this.start();
+          startButton.textContent = 'Restart';
+        } else {
+          // Cliques subsequentes - Reinicia o jogo
+          this.restart();
+          // Mostra mensagem inicial
+          document.querySelector('.message-start').classList.remove('hidden');
+        }
       });
     }
 
@@ -327,32 +350,31 @@ class Game {
         return;
       }
 
+      let moved = false;
+
       switch (e.key) {
         case 'ArrowLeft':
-          if (this.moveLeft()) {
-            this.addRandomTile();
-          }
+          moved = this.moveLeft();
           break;
         case 'ArrowRight':
-          if (this.moveRight()) {
-            this.addRandomTile();
-          }
+          moved = this.moveRight();
           break;
         case 'ArrowUp':
-          if (this.moveUp()) {
-            this.addRandomTile();
-          }
+          moved = this.moveUp();
           break;
         case 'ArrowDown':
-          if (this.moveDown()) {
-            this.addRandomTile();
-          }
+          moved = this.moveDown();
           break;
       }
 
-      this.updateScore();
-      this.updateDisplay();
-      this.checkGameState();
+      // Se houve movimento, adiciona duas novas peças
+      if (moved) {
+        this.addRandomTile();
+        this.addRandomTile();
+        this.updateScore();
+        this.updateDisplay();
+        this.checkGameState();
+      }
     });
   }
 
@@ -360,6 +382,7 @@ class Game {
     // Verifica se perdeu
     if (!this.canMove()) {
       this.gameOver = true;
+      this.status = 'idle'; // Adiciona esta linha
 
       const message = document.querySelector('.message-lose');
 
